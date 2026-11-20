@@ -1,12 +1,34 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import CryptoJS from 'crypto-js';
 
 // Simple localStorage-backed repository
 const KEY = 'notes.v1';
 
 function loadNotes() {
-  try { return JSON.parse(localStorage.getItem(KEY)) ?? []; } catch { return []; }
+  try {
+    const encrypted = localStorage.getItem(KEY);
+    if (!encrypted) return [];
+    const bytes = CryptoJS.AES.decrypt(
+      encrypted,
+      'secret key 123'
+    );
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    return JSON.parse(decrypted);
+  } catch {
+    return [];
+  }
 }
-function saveNotes(notes) { localStorage.setItem(KEY, JSON.stringify(notes)); }
+
+
+function saveNotes(notes) {
+  const data = JSON.stringify(notes);
+  const encrypted = CryptoJS.AES.encrypt(
+    data,
+    'secret key 123'
+  ).toString();
+  localStorage.setItem(KEY, encrypted);
+}
+
 
 export default function App() {
   const [notes, setNotes] = useState(loadNotes());
